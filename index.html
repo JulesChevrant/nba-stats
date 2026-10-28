@@ -63,7 +63,7 @@ td.pts{font-weight:700}
 .rk td:first-child,.rk th:first-child{text-align:center;width:36px;color:var(--mute)}
 .dnp{color:var(--mute);font-size:12px;margin:6px 4px 0}
 .hidden{display:none}
-#upd{text-align:center;color:var(--mute);font-size:12px;margin:-4px 0 10px}#upd:empty{display:none}
+#upd{text-align:right;color:var(--mute);font-size:12px;margin:-4px 0 10px}#upd:empty{display:none}
 </style>
 </head>
 <body>
@@ -155,7 +155,7 @@ $('#next').onclick=()=>loadDay(shift(day,1));
 /* ---------- Actualisation automatique (30 s) ---------- */
 let live=false;
 function stamp(){
-  $('#upd').textContent=(live&&day===maxDay)?'Actualisation automatique toutes les 30 s · mis à jour à '+new Date().toLocaleTimeString('fr-FR'):'';
+  $('#upd').textContent=(live&&day===maxDay)?'Mis à jour à '+new Date().toLocaleTimeString('fr-FR'):'';
 }
 async function refresh(){
   if(!live||document.hidden||day!==maxDay||$('#v1').classList.contains('hidden'))return;
