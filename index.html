@@ -62,6 +62,21 @@ td.pts{font-weight:700}
 .rk img{width:22px;height:22px;vertical-align:middle;margin-right:8px}
 .rk td:first-child,.rk th:first-child{text-align:center;width:36px;color:var(--mute)}
 .dnp{color:var(--mute);font-size:12px;margin:6px 4px 0}
+.nm{display:inline-block;max-width:calc(100% - 30px);overflow:hidden;text-overflow:ellipsis;vertical-align:bottom}.nm.b{max-width:100%}
+@media(max-width:600px){
+  main{padding:12px 10px}
+  .body>div{padding:6px 4px 10px;overflow-x:visible}
+  .body table{table-layout:fixed}
+  .body th,.body td{padding:6px 2px;font-size:13px;overflow:hidden}
+  .body th{font-size:10px}
+  .body th:first-child,.body td:first-child{width:35%;padding-left:6px}
+  .pos{margin-left:4px;padding:0 2px}
+  .head{padding:12px 8px;gap:6px}
+  .team{min-width:0;gap:8px}
+  .team img{width:28px;height:28px;flex:none}
+  .team{font-size:14px}
+  .score{font-size:24px;padding:0 6px}
+}
 .hidden{display:none}
 #upd{text-align:right;color:var(--mute);font-size:12px;margin:-4px 0 10px}#upd:empty{display:none}
 </style>
@@ -103,7 +118,7 @@ function card(e){
   const hw=+home.score>+away.score, aw=+away.score>+home.score;
   const status=state==='pre'?new Date(e.date).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+' (heure de Paris)':(state==='in'?'En cours · ':'')+esc(e.status.type.shortDetail);
   return `<article class="card shut" id="g${e.id}" data-state="${state}">
-   <div class="head" onclick="this.parentNode.classList.toggle('shut')">
+   <div class="head" onclick="toggleCard(this.parentNode)">
     <div class="team">${logo(home.team)}<div>${esc(home.team.shortDisplayName)}<small>${esc(rec(home))}</small></div></div>
     <div class="score"><span class="${state==='post'&&!hw?'l':'w'}">${sc(home)}</span> – <span class="${state==='post'&&!aw?'l':'w'}">${sc(away)}</span></div>
     <div class="team r">${logo(away.team)}<div>${esc(away.team.shortDisplayName)}<small>${esc(rec(away))}</small></div></div>
@@ -112,6 +127,11 @@ function card(e){
    <div class="body"><p class="msg">${state==='pre'?'Match pas encore joué.':'Chargement des stats…'}</p></div>
   </article>`;
 }
+function toggleCard(c){
+  const wasShut=c.classList.contains('shut');
+  document.querySelectorAll('#games .card').forEach(x=>x.classList.add('shut'));
+  if(wasShut){c.classList.remove('shut');requestAnimationFrame(()=>c.scrollIntoView({behavior:'smooth',block:'nearest'}))}
+}
 const cell=(v,thr)=>`<td${+v>=thr?' class="hl"':''}>${esc(v)}</td>`;
 function teamTable(t,order){
   const st=t.statistics[0], K=st.keys, ix=k=>K.indexOf(k);
@@ -119,7 +139,7 @@ function teamTable(t,order){
   const dnp=st.athletes.length-rows.length;
   const starters=rows.filter(r=>r.a.starter), bench=rows.filter(r=>!r.a.starter).sort((x,y)=>y.m-x.m);
   const tr=r=>{const g=k=>r.s[ix(k)];const pm=g('plusMinus');
-    return `<tr><td>${esc(r.a.athlete.shortName||r.a.athlete.displayName)}${r.a.starter?`<span class="pos">${esc(r.a.athlete.position?.abbreviation||'')}</span>`:''}</td>
+    return `<tr><td><span class="nm${r.a.starter?'':' b'}">${esc(r.a.athlete.shortName||r.a.athlete.displayName)}</span>${r.a.starter?`<span class="pos">${esc(r.a.athlete.position?.abbreviation||'')}</span>`:''}</td>
     <td>${esc(g('minutes'))}</td><td class="pts${+g('points')>=25?' hl':''}">${esc(g('points'))}</td>${cell(g('rebounds'),10)}${cell(g('assists'),10)}<td>${esc(g('steals'))}</td><td>${esc(g('blocks'))}</td>
     <td class="${String(pm).startsWith('+')&&pm!=='+0'?'p':String(pm).startsWith('-')?'n':''}">${esc(pm)}</td></tr>`};
   return `<div><h3>${esc(t.team.displayName)}</h3><table><thead><tr><th>Joueur</th><th>MIN</th><th>PTS</th><th>REB</th><th>PA</th><th>STL</th><th>BLK</th><th>+/-</th></tr></thead><tbody>
