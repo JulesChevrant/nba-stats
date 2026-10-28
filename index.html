@@ -140,7 +140,7 @@ async function loadDay(d,autoBack=0){
   $('#games').innerHTML='<p class="msg">Chargement…</p>';
   try{
     const sb=await getJ(`${API}/scoreboard?dates=${d}`); if(my!==token)return;
-    if(autoBack&&!sb.events.some(e=>e.status.type.state==='post')) return loadDay(shift(d,-1),autoBack-1);
+    if(autoBack&&!sb.events.some(e=>e.status.type.state!=='pre')) return loadDay(shift(d,-1),autoBack-1);
     if(!sb.events.length){$('#games').innerHTML='<p class="msg">Aucun match ce jour-là.</p>';return}
     $('#games').innerHTML=sb.events.map(card).join('');
     sb.events.forEach(e=>fill(e,my));
