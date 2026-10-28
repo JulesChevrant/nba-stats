@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NBA – Résultats</title>
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--ink:#111827;--mute:#6b7280;--line:#e5e7eb;--acc:#1d4ed8;--hl:#fef3c7;--pos:#15803d;--neg:#b91c1c}
+@media(prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#171a21;--ink:#e8eaee;--mute:#9aa1ad;--line:#2a2f3a;--acc:#7aa7ff;--hl:#3b3314;--pos:#4ade80;--neg:#f87171}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:16px}
+h1{font-size:20px;margin:0 0 12px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:14px}
+.tabs button,.seg button,.nav button{font:inherit;color:var(--mute);background:none;border:0;padding:10px 16px;cursor:pointer}
+.tabs button.on{color:var(--ink);border-bottom:2px solid var(--acc);font-weight:600}
+.nav{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.nav button{border:1px solid var(--line);border-radius:8px;padding:6px 12px;color:var(--ink);background:var(--card)}
+.nav button:disabled{opacity:.4;cursor:default}
+.nav b{flex:1;text-align:center}.nav b::first-letter{text-transform:uppercase}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:14px;overflow:hidden}
+.head{display:flex;align-items:center;justify-content:center;gap:14px;padding:14px;cursor:pointer;flex-wrap:wrap}
+.team{display:flex;align-items:center;gap:10px;flex:1;min-width:140px}
+.team.r{flex-direction:row-reverse;text-align:right}
+.team img{width:40px;height:40px}
+.team small{display:block;color:var(--mute);font-size:12px}
+.score{font-size:28px;font-weight:700;white-space:nowrap}
+.score .w{color:var(--ink)}.score .l{color:var(--mute);font-weight:500}
+.st{width:100%;text-align:center;color:var(--mute);font-size:12px;margin-top:-6px}
+.body{display:grid;grid-template-columns:1fr;gap:0;border-top:1px solid var(--line)}
+@media(min-width:900px){.body{grid-template-columns:1fr 1fr}.body>div+div{border-left:1px solid var(--line)}}
+.card.shut .body{display:none}
+.body>div{padding:8px 10px 12px;overflow-x:auto}
+h3{font-size:13px;margin:8px 4px;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{padding:6px 7px;text-align:right;white-space:nowrap}
+th{font-size:11px;color:var(--mute);font-weight:600;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+tr.sep td{padding:0;border-top:2px solid var(--line)}
+tbody tr:not(.sep){border-bottom:1px solid var(--line)}
+.pos{display:inline-block;min-width:20px;text-align:center;font-size:10px;color:var(--mute);border:1px solid var(--line);border-radius:4px;margin-left:6px;padding:0 3px}
+.hl{background:var(--hl);border-radius:4px}
+.p{color:var(--pos)}.n{color:var(--neg)}
+td.pts{font-weight:700}
+.msg{color:var(--mute);text-align:center;padding:24px}
+.seg{display:flex;gap:6px;margin-bottom:12px}
+.seg button{border:1px solid var(--line);border-radius:999px;padding:6px 16px;background:var(--card)}
+.seg button.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+#v2 .card{max-width:760px}
+.rk{width:100%;table-layout:fixed;min-width:560px}
+.rk th:nth-child(1){width:44px}
+.rk th:nth-child(2){width:190px}
+.rk th:last-child,.rk td:last-child{padding-right:24px}
+.rk tr.z1 td:first-child{box-shadow:inset 3px 0 #22c55e}
+.rk tr.z2 td:first-child{box-shadow:inset 3px 0 #f59e0b}
+.rk tr.z3 td:first-child{box-shadow:inset 3px 0 #f87171}
+.legend{display:flex;gap:14px;flex-wrap:wrap;padding:8px 12px 12px;color:var(--mute);font-size:12px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.legend .d1{background:#22c55e}.legend .d2{background:#f59e0b}.legend .d3{background:#f87171}
+.rk td:nth-child(2){text-align:left;font-weight:600;min-width:130px;padding-right:20px}
+.rk th:nth-child(2){text-align:left}
+.rk img{width:22px;height:22px;vertical-align:middle;margin-right:8px}
+.rk td:first-child,.rk th:first-child{text-align:center;width:36px;color:var(--mute)}
+.dnp{color:var(--mute);font-size:12px;margin:6px 4px 0}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<main>
+<h1>🏀 NBA</h1>
+<div class="tabs"><button id="t1" class="on">Matchs</button><button id="t2">Classement</button></div>
+
+<section id="v1">
+  <div class="nav"><button id="prev">←</button><b id="dlabel">…</b><button id="next">→</button></div>
+  <div id="games"></div>
+</section>
+
+<section id="v2" class="hidden">
+  <div class="seg"><button id="c0" class="on">Ouest</button><button id="c1">Est</button></div>
+  <div class="card"><div id="rank" style="overflow-x:auto"></div></div>
+</section>
+</main>
+
+<script>
+const API='https://site.api.espn.com/apis/site/v2/sports/basketball/nba';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const getJ=async u=>{const r=await fetch(u);if(!r.ok)throw new Error('HTTP '+r.status);return r.json()};
+const mkDate=d=>new Date(Date.UTC(+d.slice(0,4),+d.slice(4,6)-1,+d.slice(6,8),12));
+const shift=(d,n)=>{const t=mkDate(d);t.setUTCDate(t.getUTCDate()+n);return t.toISOString().slice(0,10).replaceAll('-','')};
+const etToday=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/New_York'}).format(new Date()).replaceAll('-','');
+const label=d=>mkDate(d).toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',timeZone:'UTC'});
+let day,maxDay=etToday(),token=0;
+
+/* ---------- Matchs ---------- */
+function logo(t){return t.logo?`<img src="${esc(t.logo)}" alt="">`:''}
+function card(e){
+  const c=e.competitions[0], state=e.status.type.state;
+  const home=c.competitors.find(x=>x.homeAway==='home'), away=c.competitors.find(x=>x.homeAway==='away');
+  const sc=x=>state==='pre'?'':+x.score, rec=x=>(x.records||[]).find(r=>r.type==='total')?.summary||'';
+  const hw=+home.score>+away.score, aw=+away.score>+home.score;
+  const status=state==='pre'?new Date(e.date).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+' (heure de Paris)':(state==='in'?'En cours · ':'')+esc(e.status.type.shortDetail);
+  return `<article class="card shut" id="g${e.id}">
+   <div class="head" onclick="this.parentNode.classList.toggle('shut')">
+    <div class="team">${logo(home.team)}<div>${esc(home.team.shortDisplayName)}<small>${esc(rec(home))}</small></div></div>
+    <div class="score"><span class="${state==='post'&&!hw?'l':'w'}">${sc(home)}</span> – <span class="${state==='post'&&!aw?'l':'w'}">${sc(away)}</span></div>
+    <div class="team r">${logo(away.team)}<div>${esc(away.team.shortDisplayName)}<small>${esc(rec(away))}</small></div></div>
+    <div class="st">${status}</div>
+   </div>
+   <div class="body"><p class="msg">${state==='pre'?'Match pas encore joué.':'Chargement des stats…'}</p></div>
+  </article>`;
+}
+const cell=(v,thr)=>`<td${+v>=thr?' class="hl"':''}>${esc(v)}</td>`;
+function teamTable(t,order){
+  const st=t.statistics[0], K=st.keys, ix=k=>K.indexOf(k);
+  const rows=st.athletes.filter(a=>!a.didNotPlay&&a.stats&&a.stats.length).map(a=>({a,s:a.stats,m:parseInt(a.stats[ix('minutes')])||0}));
+  const dnp=st.athletes.length-rows.length;
+  const starters=rows.filter(r=>r.a.starter), bench=rows.filter(r=>!r.a.starter).sort((x,y)=>y.m-x.m);
+  const tr=r=>{const g=k=>r.s[ix(k)];const pm=g('plusMinus');
+    return `<tr><td>${esc(r.a.athlete.shortName||r.a.athlete.displayName)}${r.a.starter?`<span class="pos">${esc(r.a.athlete.position?.abbreviation||'')}</span>`:''}</td>
+    <td>${esc(g('minutes'))}</td><td class="pts${+g('points')>=25?' hl':''}">${esc(g('points'))}</td>${cell(g('rebounds'),10)}${cell(g('assists'),10)}<td>${esc(g('steals'))}</td><td>${esc(g('blocks'))}</td>
+    <td class="${String(pm).startsWith('+')&&pm!=='+0'?'p':String(pm).startsWith('-')?'n':''}">${esc(pm)}</td></tr>`};
+  return `<div><h3>${esc(t.team.displayName)}</h3><table><thead><tr><th>Joueur</th><th>MIN</th><th>PTS</th><th>REB</th><th>PA</th><th>STL</th><th>BLK</th><th>+/-</th></tr></thead><tbody>
+   ${starters.map(tr).join('')}${starters.length&&bench.length?'<tr class="sep"><td colspan="8"></td></tr>':''}${bench.map(tr).join('')}</tbody></table>
+   ${dnp?`<p class="dnp">${dnp} joueur${dnp>1?'s':''} sans temps de jeu</p>`:''}</div>`;
+}
+async function fill(e,my){
+  if(e.status.type.state==='pre')return;
+  const body=document.querySelector(`#g${e.id} .body`);
+  try{
+    const s=await getJ(`${API}/summary?event=${e.id}`); if(my!==token)return;
+    const c=e.competitions[0], order=[c.competitors.find(x=>x.homeAway==='home').team.id,c.competitors.find(x=>x.homeAway==='away').team.id];
+    const teams=[...s.boxscore.players].sort((a,b)=>order.indexOf(a.team.id)-order.indexOf(b.team.id));
+    body.innerHTML=teams.map(t=>teamTable(t)).join('');
+  }catch(err){body.innerHTML=`<p class="msg">Stats indisponibles (${esc(err.message)}).</p>`}
+}
+async function loadDay(d,autoBack=0){
+  const my=++token; day=d;
+  $('#dlabel').textContent=label(d); $('#next').disabled=d>=maxDay;
+  $('#games').innerHTML='<p class="msg">Chargement…</p>';
+  try{
+    const sb=await getJ(`${API}/scoreboard?dates=${d}`); if(my!==token)return;
+    if(autoBack&&!sb.events.some(e=>e.status.type.state==='post')) return loadDay(shift(d,-1),autoBack-1);
+    if(!sb.events.length){$('#games').innerHTML='<p class="msg">Aucun match ce jour-là.</p>';return}
+    $('#games').innerHTML=sb.events.map(card).join('');
+    sb.events.forEach(e=>fill(e,my));
+  }catch(err){$('#games').innerHTML=`<p class="msg">Impossible de charger les matchs (${esc(err.message)}).</p>`}
+}
+$('#prev').onclick=()=>loadDay(shift(day,-1));
+$('#next').onclick=()=>loadDay(shift(day,1));
+
+/* ---------- Classement ---------- */
+let standings=null,conf=0;
+const sv=(e,n)=>{const s=e.stats.find(x=>x.name===n);return s?s.displayValue:'-'};
+const streakFr=s=>String(s).replace(/^W/,'V').replace(/^L/,'D');
+function drawRank(){
+  if(!standings){$('#rank').innerHTML='<p class="msg">Chargement…</p>';return}
+  const ent=[...standings.children[conf].standings.entries].sort((a,b)=>(+sv(a,'playoffSeed')||99)-(+sv(b,'playoffSeed')||99));
+  $('#rank').innerHTML=`<table class="rk"><thead><tr><th>#</th><th>Équipe</th><th>V</th><th>D</th><th>%</th><th>Dom.</th><th>Ext.</th><th>D10</th><th>Sér.</th></tr></thead><tbody>
+  ${ent.map((e,i)=>`<tr class="${i<6?'z1':i<10?'z2':'z3'}${i===5||i===9?' cut':''}"><td>${i+1}</td><td>${e.team.logos?.[0]?`<img src="${esc(e.team.logos[0].href)}" alt="">`:''}${esc(e.team.name)}</td>
+  <td>${sv(e,'wins')}</td><td>${sv(e,'losses')}</td><td><b>${sv(e,'winPercent')}</b></td><td>${sv(e,'Home')}</td><td>${sv(e,'Road')}</td><td>${sv(e,'Last Ten Games')}</td><td class="${/^W/.test(sv(e,'streak'))?'p':/^L/.test(sv(e,'streak'))?'n':''}">${esc(streakFr(sv(e,'streak')))}</td></tr>`).join('')}</tbody></table>
+  <div class="legend"><span><i class="d1"></i>Playoffs (1–6)</span><span><i class="d2"></i>Play-in (7–10)</span><span><i class="d3"></i>Non qualifiées (11+)</span></div>`;
+}
+async function loadRank(){
+  try{standings=await getJ('https://site.api.espn.com/apis/v2/sports/basketball/nba/standings');
+    setConf(0)}
+  catch(err){$('#rank').innerHTML=`<p class="msg">Classement indisponible (${esc(err.message)}).</p>`}
+}
+function setConf(i){
+  const west=standings.children.findIndex(c=>/west/i.test(c.name)), east=standings.children.findIndex(c=>/east/i.test(c.name));
+  conf=i===0?west:east; $('#c0').classList.toggle('on',i===0); $('#c1').classList.toggle('on',i===1); drawRank();
+}
+$('#c0').onclick=()=>standings&&setConf(0); $('#c1').onclick=()=>standings&&setConf(1);
+
+/* ---------- Onglets ---------- */
+function tab(n){
+  $('#t1').classList.toggle('on',n===1);$('#t2').classList.toggle('on',n===2);
+  $('#v1').classList.toggle('hidden',n!==1);$('#v2').classList.toggle('hidden',n!==2);
+  if(n===2&&!standings)loadRank();
+}
+$('#t1').onclick=()=>tab(1);$('#t2').onclick=()=>tab(2);
+loadDay(maxDay,3);
+</script>
+</body>
+</html>
