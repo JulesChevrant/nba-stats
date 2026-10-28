@@ -63,6 +63,7 @@ td.pts{font-weight:700}
 .rk td:first-child,.rk th:first-child{text-align:center;width:36px;color:var(--mute)}
 .dnp{color:var(--mute);font-size:12px;margin:6px 4px 0}
 .hidden{display:none}
+#upd{text-align:center;color:var(--mute);font-size:12px;margin:-4px 0 10px}#upd:empty{display:none}
 </style>
 </head>
 <body>
@@ -72,6 +73,7 @@ td.pts{font-weight:700}
 
 <section id="v1">
   <div class="nav"><button id="prev">←</button><b id="dlabel">…</b><button id="next">→</button></div>
+  <div id="upd"></div>
   <div id="games"></div>
 </section>
 
@@ -100,7 +102,7 @@ function card(e){
   const sc=x=>state==='pre'?'':+x.score, rec=x=>(x.records||[]).find(r=>r.type==='total')?.summary||'';
   const hw=+home.score>+away.score, aw=+away.score>+home.score;
   const status=state==='pre'?new Date(e.date).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})+' (heure de Paris)':(state==='in'?'En cours · ':'')+esc(e.status.type.shortDetail);
-  return `<article class="card shut" id="g${e.id}">
+  return `<article class="card shut" id="g${e.id}" data-state="${state}">
    <div class="head" onclick="this.parentNode.classList.toggle('shut')">
     <div class="team">${logo(home.team)}<div>${esc(home.team.shortDisplayName)}<small>${esc(rec(home))}</small></div></div>
     <div class="score"><span class="${state==='post'&&!hw?'l':'w'}">${sc(home)}</span> – <span class="${state==='post'&&!aw?'l':'w'}">${sc(away)}</span></div>
@@ -144,10 +146,34 @@ async function loadDay(d,autoBack=0){
     if(!sb.events.length){$('#games').innerHTML='<p class="msg">Aucun match ce jour-là.</p>';return}
     $('#games').innerHTML=sb.events.map(card).join('');
     sb.events.forEach(e=>fill(e,my));
+    live=sb.events.some(e=>e.status.type.state!=='post'); stamp();
   }catch(err){$('#games').innerHTML=`<p class="msg">Impossible de charger les matchs (${esc(err.message)}).</p>`}
 }
 $('#prev').onclick=()=>loadDay(shift(day,-1));
 $('#next').onclick=()=>loadDay(shift(day,1));
+
+/* ---------- Actualisation automatique (30 s) ---------- */
+let live=false;
+function stamp(){
+  $('#upd').textContent=(live&&day===maxDay)?'Actualisation automatique toutes les 30 s · mis à jour à '+new Date().toLocaleTimeString('fr-FR'):'';
+}
+async function refresh(){
+  if(!live||document.hidden||day!==maxDay||$('#v1').classList.contains('hidden'))return;
+  const my=token;
+  try{
+    const sb=await getJ(`${API}/scoreboard?dates=${day}`); if(my!==token)return;
+    sb.events.forEach(e=>{
+      const el=document.getElementById('g'+e.id); if(!el)return;
+      const tmp=document.createElement('div'); tmp.innerHTML=card(e);
+      el.querySelector('.head').innerHTML=tmp.querySelector('.head').innerHTML;
+      const st=e.status.type.state, prev=el.dataset.state; el.dataset.state=st;
+      if(st==='in'||st!==prev) fill(e,my);
+    });
+    live=sb.events.some(e=>e.status.type.state!=='post'); stamp();
+  }catch(err){}
+}
+setInterval(refresh,30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
 
 /* ---------- Classement ---------- */
 let standings=null,conf=0;
