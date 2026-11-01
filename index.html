@@ -269,7 +269,7 @@ $('#c0').onclick=()=>standings&&setConf(0); $('#c1').onclick=()=>standings&&setC
 function tab(n){
   [1,2,3].forEach(i=>{$('#t'+i).classList.toggle('on',i===n);$('#v'+i).classList.toggle('hidden',i!==n)});
   if(n===2&&!standings)loadRank();
-  if(n===3&&(!leaders.t||Date.now()-leaders.t>600000))loadLeaders();
+  if(n===3&&leadStale(leaders))loadLeaders();
 }
 $('#t1').onclick=()=>tab(1);$('#t2').onclick=()=>tab(2);$('#t3').onclick=()=>tab(3);
 
@@ -278,7 +278,12 @@ const LEAD={
  pts:{h:'Meilleurs marqueurs · points par match',sort:'offensive.avgPoints:desc',cat:'offensive',key:'avgPoints'},
  reb:{h:'Meilleurs rebondeurs · rebonds par match',sort:'general.avgRebounds:desc',cat:'general',key:'avgRebounds'},
  ast:{h:'Meilleurs passeurs · passes décisives par match',sort:'offensive.avgAssists:desc',cat:'offensive',key:'avgAssists'}};
-const leaders={t:0,data:{}}; let leadKey='pts';
+const leaders={day:'',at:0,prov:false,data:{}}; let leadKey='pts';
+const LEAD_CUTOFF_H=8; /* heure de Paris (8h) à partir de laquelle on recharge (~1 h après la fin des derniers matchs) */
+const leadMinutes=ts=>{const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(ts-LEAD_CUTOFF_H*3600e3));return +p.find(x=>x.type==='hour').value*60+ +p.find(x=>x.type==='minute').value};
+/* données récupérées dans les 90 min après l'heure de bascule : provisoires (ESPN peut avoir du retard), revérifiées après 30 min */
+const leadStale=c=>!c||c.day!==leadDay()||(c.prov&&Date.now()-c.at>1800e3);
+const leadDay=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/Paris'}).format(new Date(Date.now()-LEAD_CUTOFF_H*3600e3));
 const seasonYear=()=>{const d=new Date();return d.getFullYear()+(d.getMonth()>=6?1:0)};
 const ini=n=>n.replace(/[^A-Za-z\u00C0-\u00FF ]/g,'').split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('');
 async function fetchLeaders(k){
@@ -302,10 +307,14 @@ function drawLeaders(){
     <div class="ld-bar"><i style="width:${(p.v/max*100).toFixed(1)}%"></i></div></li>`).join('');
 }
 async function loadLeaders(){
+  const day=leadDay(), keys=Object.keys(LEAD);
+  try{const c=JSON.parse(localStorage.getItem('nba-leaders')||'null');
+    if(c&&c.data&&keys.every(k=>c.data[k])&&!leadStale(c)){Object.assign(leaders,{data:c.data,day:c.day,at:c.at,prov:c.prov});drawLeaders();return}}catch(e){}
   drawLeaders();
   try{
-    const keys=Object.keys(LEAD), res=await Promise.all(keys.map(fetchLeaders));
-    keys.forEach((k,i)=>leaders.data[k]=res[i]); leaders.t=Date.now(); drawLeaders();
+    const res=await Promise.all(keys.map(fetchLeaders));
+    keys.forEach((k,i)=>leaders.data[k]=res[i]); Object.assign(leaders,{day,at:Date.now(),prov:leadMinutes(Date.now())<90}); drawLeaders();
+    try{localStorage.setItem('nba-leaders',JSON.stringify({day,at:leaders.at,prov:leaders.prov,data:leaders.data}))}catch(e){}
   }catch(err){$('#lead').innerHTML=`<li class="msg">Statistiques indisponibles (${esc(err.message)}).</li>`}
 }
 document.querySelectorAll('#seg3 button').forEach(b=>b.onclick=()=>{
