@@ -10,6 +10,8 @@
 <style>
 :root{--bg:#f4f5f7;--card:#fff;--ink:#111827;--mute:#6b7280;--line:#e5e7eb;--acc:#1d4ed8;--hl:#fef3c7;--pos:#15803d;--neg:#b91c1c}
 @media(prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#171a21;--ink:#e8eaee;--mute:#9aa1ad;--line:#2a2f3a;--acc:#7aa7ff;--hl:#3b3314;--pos:#4ade80;--neg:#f87171}}
+:root{--tint:rgba(29,78,216,.07);--bar:rgba(29,78,216,.28)}
+@media(prefers-color-scheme:dark){:root{--tint:rgba(122,167,255,.09);--bar:rgba(122,167,255,.30)}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 main{max-width:1100px;margin:0 auto;padding:16px}
@@ -95,6 +97,28 @@ td.pts{font-weight:700}
   .rk img{width:18px;height:18px;margin-right:6px}
   .legend{gap:10px;padding:8px 8px 10px}
 }
+#v3 .card{max-width:760px}
+.seg{flex-wrap:wrap}
+.ld-ttl{padding:12px 14px 8px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ld-ttl h2{margin:0;font-size:13px;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.ld-ttl span{font-size:12px;color:var(--mute)}
+#lead{list-style:none;margin:0;padding:0}
+.ld-row{display:grid;grid-template-columns:26px 40px 1fr auto;column-gap:10px;align-items:center;padding:10px 14px 12px;border-top:1px solid var(--line)}
+.ld-row.first{background:var(--tint)}
+.ld-rk{color:var(--mute);text-align:center;font-variant-numeric:tabular-nums}
+.ld-av{position:relative;width:40px;height:40px;border-radius:50%;background:var(--line);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--mute)}
+.ld-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;background:var(--line);opacity:0}
+.ld-row.first .ld-av{box-shadow:0 0 0 2px var(--acc)}
+.ld-who{min-width:0}
+.ld-nm{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ld-tm{display:flex;align-items:center;gap:5px;color:var(--mute);font-size:12px}
+.ld-tm img{width:14px;height:14px}
+.ld-val{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.ld-row.first .ld-val{color:var(--acc);font-size:26px}
+.ld-bar{grid-column:2 / -1;height:5px;border-radius:3px;background:var(--line);margin-top:8px;overflow:hidden}
+.ld-bar i{display:block;height:100%;background:var(--bar);border-radius:3px}
+.ld-row.first .ld-bar i{background:var(--acc)}
+@media(max-width:600px){.ld-row{column-gap:8px;padding:10px 10px 12px}.tabs button{padding:10px 12px}}
 .hidden{display:none}
 #upd{text-align:right;color:var(--mute);font-size:12px;margin:-4px 0 10px}#upd:empty{display:none}
 </style>
@@ -102,7 +126,7 @@ td.pts{font-weight:700}
 <body>
 <main>
 <h1>🏀 NBA</h1>
-<div class="tabs"><button id="t1" class="on">Matchs</button><button id="t2">Classement</button></div>
+<div class="tabs"><button id="t1" class="on">Matchs</button><button id="t2">Classement</button><button id="t3">Stats</button></div>
 
 <section id="v1">
   <div class="nav"><button id="prev">←</button><b id="dlabel">…</b><button id="next">→</button></div>
@@ -113,6 +137,11 @@ td.pts{font-weight:700}
 <section id="v2" class="hidden">
   <div class="seg"><button id="c0" class="on">Ouest</button><button id="c1">Est</button></div>
   <div class="card"><div id="rank" style="overflow-x:auto"></div></div>
+</section>
+
+<section id="v3" class="hidden">
+  <div class="seg" id="seg3"><button data-k="pts" class="on">Points</button><button data-k="reb">Rebonds</button><button data-k="ast">Passes</button></div>
+  <div class="card" id="leadcard"><div class="ld-ttl"><h2 id="lh"></h2><span id="lseason"></span></div><ol id="lead"></ol></div>
 </section>
 </main>
 
@@ -238,11 +267,50 @@ $('#c0').onclick=()=>standings&&setConf(0); $('#c1').onclick=()=>standings&&setC
 
 /* ---------- Onglets ---------- */
 function tab(n){
-  $('#t1').classList.toggle('on',n===1);$('#t2').classList.toggle('on',n===2);
-  $('#v1').classList.toggle('hidden',n!==1);$('#v2').classList.toggle('hidden',n!==2);
+  [1,2,3].forEach(i=>{$('#t'+i).classList.toggle('on',i===n);$('#v'+i).classList.toggle('hidden',i!==n)});
   if(n===2&&!standings)loadRank();
+  if(n===3&&(!leaders.t||Date.now()-leaders.t>600000))loadLeaders();
 }
-$('#t1').onclick=()=>tab(1);$('#t2').onclick=()=>tab(2);
+$('#t1').onclick=()=>tab(1);$('#t2').onclick=()=>tab(2);$('#t3').onclick=()=>tab(3);
+
+/* ---------- Stats : leaders ---------- */
+const LEAD={
+ pts:{h:'Meilleurs marqueurs · points par match',sort:'offensive.avgPoints:desc',cat:'offensive',key:'avgPoints'},
+ reb:{h:'Meilleurs rebondeurs · rebonds par match',sort:'general.avgRebounds:desc',cat:'general',key:'avgRebounds'},
+ ast:{h:'Meilleurs passeurs · passes décisives par match',sort:'offensive.avgAssists:desc',cat:'offensive',key:'avgAssists'}};
+const leaders={t:0,data:{}}; let leadKey='pts';
+const seasonYear=()=>{const d=new Date();return d.getFullYear()+(d.getMonth()>=6?1:0)};
+const ini=n=>n.replace(/[^A-Za-z\u00C0-\u00FF ]/g,'').split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('');
+async function fetchLeaders(k){
+  const L=LEAD[k];
+  const j=await getJ(`https://site.web.api.espn.com/apis/common/v3/sports/basketball/nba/statistics/byathlete?region=us&lang=en&contentorigin=espn&isqualified=true&page=1&limit=10&season=${seasonYear()}&seasontype=2&sort=${encodeURIComponent(L.sort)}`);
+  const names=Object.fromEntries(j.categories.map(c=>[c.name,c.names]));
+  const g=(a,c,n)=>{const cc=a.categories.find(x=>x.name===c);return cc?cc.values[names[c].indexOf(n)]:null};
+  return j.athletes.map(a=>({name:a.athlete.displayName,team:a.athlete.teamShortName||'',photo:a.athlete.headshot&&a.athlete.headshot.href,logo:a.athlete.teamLogos&&a.athlete.teamLogos[0]&&a.athlete.teamLogos[0].href,gp:g(a,'general','gamesPlayed'),v:g(a,L.cat,L.key)})).filter(r=>r.v!=null);
+}
+function drawLeaders(){
+  const y=seasonYear(), rows=leaders.data[leadKey];
+  $('#lh').textContent=LEAD[leadKey].h; $('#lseason').textContent=`Saison ${y-1}\u2013${String(y).slice(2)}`;
+  if(!rows){$('#lead').innerHTML='<li class="msg">Chargement\u2026</li>';return}
+  if(!rows.length){$('#lead').innerHTML='<li class="msg">Pas encore de statistiques pour cette saison.</li>';return}
+  const max=rows[0].v;
+  $('#lead').innerHTML=rows.map((p,i)=>`<li class="ld-row${i===0?' first':''}">
+    <span class="ld-rk">${i+1}</span>
+    <span class="ld-av">${esc(ini(p.name))}${p.photo?`<img src="${esc(p.photo)}" alt="" onload="this.style.opacity=1" onerror="this.remove()">`:''}</span>
+    <div class="ld-who"><span class="ld-nm">${esc(p.name)}</span><span class="ld-tm">${p.logo?`<img src="${esc(p.logo)}" alt="" onerror="this.remove()">`:''}${esc(p.team)} \u00b7 ${p.gp} match${p.gp>1?'s':''}</span></div>
+    <span class="ld-val">${p.v.toFixed(1)}</span>
+    <div class="ld-bar"><i style="width:${(p.v/max*100).toFixed(1)}%"></i></div></li>`).join('');
+}
+async function loadLeaders(){
+  drawLeaders();
+  try{
+    const keys=Object.keys(LEAD), res=await Promise.all(keys.map(fetchLeaders));
+    keys.forEach((k,i)=>leaders.data[k]=res[i]); leaders.t=Date.now(); drawLeaders();
+  }catch(err){$('#lead').innerHTML=`<li class="msg">Statistiques indisponibles (${esc(err.message)}).</li>`}
+}
+document.querySelectorAll('#seg3 button').forEach(b=>b.onclick=()=>{
+  leadKey=b.dataset.k; document.querySelectorAll('#seg3 button').forEach(x=>x.classList.toggle('on',x===b)); drawLeaders();
+});
 loadDay(maxDay,3);
 </script>
 </body>
