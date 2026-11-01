@@ -10,8 +10,8 @@
 <style>
 :root{--bg:#f4f5f7;--card:#fff;--ink:#111827;--mute:#6b7280;--line:#e5e7eb;--acc:#1d4ed8;--hl:#fef3c7;--pos:#15803d;--neg:#b91c1c}
 @media(prefers-color-scheme:dark){:root{--bg:#0f1115;--card:#171a21;--ink:#e8eaee;--mute:#9aa1ad;--line:#2a2f3a;--acc:#7aa7ff;--hl:#3b3314;--pos:#4ade80;--neg:#f87171}}
-:root{--bar:rgba(29,78,216,.12);--barTop:rgba(29,78,216,.24)}
-@media(prefers-color-scheme:dark){:root{--bar:rgba(122,167,255,.14);--barTop:rgba(122,167,255,.28)}}
+:root{--tint:rgba(29,78,216,.07);--bar:rgba(29,78,216,.28)}
+@media(prefers-color-scheme:dark){:root{--tint:rgba(122,167,255,.09);--bar:rgba(122,167,255,.30)}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 main{max-width:1100px;margin:0 auto;padding:16px}
@@ -99,12 +99,12 @@ td.pts{font-weight:700}
 }
 #v3 .card{max-width:760px}
 .seg{flex-wrap:wrap}
-.ld-ttl{padding:10px 12px 6px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.ld-ttl{padding:10px 14px 6px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 .ld-ttl h2{margin:0;font-size:13px;color:var(--mute);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
 .ld-ttl span{font-size:12px;color:var(--mute)}
 #lead{list-style:none;margin:0;padding:0}
-.ld-row{display:grid;grid-template-columns:22px 30px 1fr auto;column-gap:8px;align-items:center;padding:6px 12px;border-top:1px solid var(--line);background:linear-gradient(90deg,var(--bar) var(--w),transparent var(--w))}
-.ld-row.first{background:linear-gradient(90deg,var(--barTop) var(--w),transparent var(--w))}
+.ld-row{display:grid;grid-template-columns:22px 30px 1fr auto;column-gap:9px;align-items:center;padding:6px 14px 8px;border-top:1px solid var(--line)}
+.ld-row.first{background:var(--tint)}
 .ld-rk{font-size:13px;color:var(--mute);text-align:center;font-variant-numeric:tabular-nums}
 .ld-av{position:relative;width:30px;height:30px;border-radius:50%;background:var(--line);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--mute)}
 .ld-av img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top;background:var(--line);opacity:0}
@@ -115,7 +115,10 @@ td.pts{font-weight:700}
 .ld-tm img{width:12px;height:12px}
 .ld-val{font-size:18px;line-height:1.2;font-weight:700;font-variant-numeric:tabular-nums}
 .ld-row.first .ld-val{color:var(--acc);font-size:21px}
-@media(max-width:600px){.ld-row{padding:6px 10px}.tabs button{padding:10px 12px}}
+.ld-bar{grid-column:2 / -1;height:4px;border-radius:2px;background:var(--line);margin-top:5px;overflow:hidden}
+.ld-bar i{display:block;height:100%;background:var(--bar);border-radius:3px}
+.ld-row.first .ld-bar i{background:var(--acc)}
+@media(max-width:600px){.ld-row{column-gap:8px;padding:6px 10px 8px}.ld-ttl h2{font-size:11.5px;letter-spacing:.02em}.tabs button{padding:10px 12px}}
 .hidden{display:none}
 #upd{text-align:right;color:var(--mute);font-size:12px;margin:-4px 0 10px}#upd:empty{display:none}
 </style>
@@ -138,7 +141,7 @@ td.pts{font-weight:700}
 
 <section id="v3" class="hidden">
   <div class="seg" id="seg3"><button data-k="pts" class="on">Points</button><button data-k="reb">Rebonds</button><button data-k="ast">Passes</button></div>
-  <div class="card" id="leadcard"><div class="ld-ttl"><h2 id="lh"></h2><span id="lseason"></span></div><ol id="lead"></ol></div>
+  <div class="card" id="leadcard"><div class="ld-ttl"><h2 id="lh"></h2></div><ol id="lead"></ol></div>
 </section>
 </main>
 
@@ -272,9 +275,9 @@ $('#t1').onclick=()=>tab(1);$('#t2').onclick=()=>tab(2);$('#t3').onclick=()=>tab
 
 /* ---------- Stats : leaders ---------- */
 const LEAD={
- pts:{h:'Points par match',sort:'offensive.avgPoints:desc',cat:'offensive',key:'avgPoints'},
- reb:{h:'Rebonds par match',sort:'general.avgRebounds:desc',cat:'general',key:'avgRebounds'},
- ast:{h:'Passes décisives par match',sort:'offensive.avgAssists:desc',cat:'offensive',key:'avgAssists'}};
+ pts:{h:'Meilleurs marqueurs · points par match',sort:'offensive.avgPoints:desc',cat:'offensive',key:'avgPoints'},
+ reb:{h:'Meilleurs rebondeurs · rebonds par match',sort:'general.avgRebounds:desc',cat:'general',key:'avgRebounds'},
+ ast:{h:'Meilleurs passeurs · passes décisives par match',sort:'offensive.avgAssists:desc',cat:'offensive',key:'avgAssists'}};
 const leaders={day:'',at:0,prov:false,data:{}}; let leadKey='pts';
 const LEAD_CUTOFF_H=8; /* heure de Paris (8h) à partir de laquelle on recharge (~1 h après la fin des derniers matchs) */
 const leadMinutes=ts=>{const p=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Paris',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(ts-LEAD_CUTOFF_H*3600e3));return +p.find(x=>x.type==='hour').value*60+ +p.find(x=>x.type==='minute').value};
@@ -292,15 +295,16 @@ async function fetchLeaders(k){
 }
 function drawLeaders(){
   const y=seasonYear(), rows=leaders.data[leadKey];
-  $('#lh').textContent=LEAD[leadKey].h; $('#lseason').textContent=`Saison ${y-1}\u2013${String(y).slice(2)}`;
+  $('#lh').textContent=LEAD[leadKey].h;
   if(!rows){$('#lead').innerHTML='<li class="msg">Chargement\u2026</li>';return}
   if(!rows.length){$('#lead').innerHTML='<li class="msg">Pas encore de statistiques pour cette saison.</li>';return}
   const max=rows[0].v;
-  $('#lead').innerHTML=rows.map((p,i)=>`<li class="ld-row${i===0?' first':''}" style="--w:${(p.v/max*100).toFixed(1)}%">
+  $('#lead').innerHTML=rows.map((p,i)=>`<li class="ld-row${i===0?' first':''}">
     <span class="ld-rk">${i+1}</span>
     <span class="ld-av">${esc(ini(p.name))}${p.photo?`<img src="${esc(p.photo)}" alt="" onload="this.style.opacity=1" onerror="this.remove()">`:''}</span>
     <div class="ld-who"><span class="ld-nm">${esc(p.name)}</span><span class="ld-tm">${p.logo?`<img src="${esc(p.logo)}" alt="" onerror="this.remove()">`:''}${esc(p.team)} \u00b7 ${p.gp} match${p.gp>1?'s':''}</span></div>
-    <span class="ld-val">${p.v.toFixed(1)}</span></li>`).join('');
+    <span class="ld-val">${p.v.toFixed(1)}</span>
+    <div class="ld-bar"><i style="width:${(p.v/max*100).toFixed(1)}%"></i></div></li>`).join('');
 }
 async function loadLeaders(){
   const day=leadDay(), keys=Object.keys(LEAD);
